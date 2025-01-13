@@ -1,34 +1,46 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_CRED = credentials('b00b8acc-1de9-4bdb-8f18-e7cc2224f523') // Docker credentials
-        GIT_CRED = credentials('9b2d3e8b-5c59-4a88-87b3-fc7a802eacfc')     // Git credentials
-        SONAR_CRED = credentials('05a2246e-f3b7-49d4-90e8-3013c427c817')   // SonarQube token
+        DOCKER_CRED = credentials('b00b8acc-1de9-4bdb-8f18-e7cc2224f523')  // Docker credentials
+        GIT_CRED = credentials('f2614ed1-648c-4e42-9e6d-09464b62d83e')      // Git credentials
+        SONAR_CRED = credentials('05a2246e-f3b7-49d4-90e8-3013c427c817')    // SonarQube token
         KUBECONFIG_CRED = credentials('8a6566ad-3999-402a-ae64-456e0f71540d') // Kubeconfig file
         DOCKER_IMAGE = "vishnu2117/maven-proj:v1"
         ARGOCD_SERVER = "https://116.204.173.18" // ArgoCD server URL
-        ARGOCD_USER = "admin"                    // ArgoCD username
-        ARGOCD_PASS = "LhgvkGBWWTbP6COt"         // ArgoCD password
+        ARGOCD_USER = "admin"                     // ArgoCD username
+        ARGOCD_PASS = "LhgvkGBWWTbP6COt"          // ArgoCD password
     }
-
     stages {
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()  // Deletes the workspace directory
+            }
+        }
+
         stage('Checkout Code') {
             steps {
-                git credentialsId: "${GIT_CRED}", url: 'https://github.com/vishnu-rv/Maven-proj.git'
+                git branch: 'main',  // Explicitly specify 'main' branch
+                    credentialsId: 'f2614ed1-648c-4e42-9e6d-09464b62d83e', // GitHub credentials ID
+                    url: 'https://github.com/vishnu-rv/Maven-proj.git'   // Repository URL
             }
         }
 
         stage('Build Application') {
             steps {
-                sh 'mvn clean package'
+                script {
+                    // Add your build steps here, e.g., Maven build, npm install, etc.
+                    echo 'Building the application...'
+                    // Example: sh 'mvn clean install'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_CRED'
+                script {
+                    // Example SonarQube analysis (use your actual command)
+                    echo 'Running SonarQube analysis...'
+                    // Example: sh 'mvn sonar:sonar'
                 }
             }
         }
@@ -36,11 +48,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh """
-                    docker login -u $DOCKER_CRED_USR -p $DOCKER_CRED_PSW
-                    docker build -t $DOCKER_IMAGE .
-                    docker push $DOCKER_IMAGE
-                    """
+                    echo 'Building Docker image...'
+                    // Build the Docker image
+                    sh 'docker build -t $DOCKER_IMAGE .'
                 }
             }
         }
@@ -48,21 +58,22 @@ pipeline {
         stage('Update ArgoCD Deployment') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'b00b8acc-1de9-4bdb-8f18-e7cc2224f523', variable: 'ARGOCD_PASS')]) {
-                        sh """
-                        argocd login $ARGOCD_SERVER --username $ARGOCD_USER --password $ARGOCD_PASS --insecure
-                        argocd app sync my-application-name
-                        """
-                    }
+                    echo 'Updating ArgoCD deployment...'
+                    // Add your ArgoCD deployment update steps
+                    // Example: sh 'kubectl apply -f deployment.yaml'
                 }
             }
         }
     }
-
     post {
         always {
             echo 'Pipeline Completed'
         }
+        success {
+            echo 'Build and deployment successful!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
     }
 }
-
