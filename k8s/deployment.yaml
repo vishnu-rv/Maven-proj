@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mavenproj-deployment
+  labels:
+    app: mavenproj
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mavenproj
+  template:
+    metadata:
+      labels:
+        app: mavenproj
+    spec:
+      containers:
+      - name: mavenproj
+        image: vishnu2117/maven-proj:v1
+        ports:
+        - containerPort: 8080
+
