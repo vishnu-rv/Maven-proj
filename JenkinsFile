@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_CRED = credentials('b00b8acc-1de9-4bdb-8f18-e7cc2224f523')  // Docker credentials
-        GIT_CRED = credentials('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')      // Git credentials
+        GIT_CRED = credentials('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')      // Git credentials
         SONAR_CRED = credentials('05a2246e-f3b7-49d4-90e8-3013c427c817')    // SonarQube token
         KUBECONFIG_CRED = credentials('8a6566ad-3999-402a-ae64-456e0f71540d') // Kubeconfig file
         DOCKER_IMAGE = "vishnu2117/maven-proj:v1"
