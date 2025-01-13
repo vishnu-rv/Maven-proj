@@ -17,14 +17,6 @@ pipeline {
             }
         }
 
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main',  // Explicitly specify 'main' branch
-                    credentialsId: 'f2614ed1-648c-4e42-9e6d-09464b62d83e', // GitHub credentials ID
-                    url: 'https://github.com/vishnu-rv/Maven-proj.git'   // Repository URL
-            }
-        }
-
         stage('Build Application') {
             steps {
                 script {
