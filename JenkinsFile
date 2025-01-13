@@ -11,32 +11,6 @@ pipeline {
         ARGOCD_PASS = "LhgvkGBWWTbP6COt"          // ArgoCD password
     }
     stages {
-        stage('Clean Workspace') {
-            steps {
-                deleteDir()  // Deletes the workspace directory
-            }
-        }
-
-        stage('Build Application') {
-            steps {
-                script {
-                    // Add your build steps here, e.g., Maven build, npm install, etc.
-                    echo 'Building the application...'
-                    // Example: sh 'mvn clean install'
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    // Example SonarQube analysis (use your actual command)
-                    echo 'Running SonarQube analysis...'
-                    // Example: sh 'mvn sonar:sonar'
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
@@ -47,12 +21,42 @@ pipeline {
             }
         }
 
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo 'Pushing Docker image to Docker registry...'
+                    // Push the Docker image to your registry
+                    withCredentials([usernamePassword(credentialsId: 'b00b8acc-1de9-4bdb-8f18-e7cc2224f523', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                        sh 'docker push $DOCKER_IMAGE'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo 'Deploying to Kubernetes...'
+                    // Apply the Kubernetes deployment and service files
+                    withCredentials([file(credentialsId: '8a6566ad-3999-402a-ae64-456e0f71540d', variable: 'KUBECONFIG')]) {
+                        sh 'kubectl apply -f k8s/deployment.yaml'  // Replace with your actual deployment.yaml file
+                        sh 'kubectl apply -f k8s/service.yaml'      // Replace with your actual service.yaml file
+                    }
+                }
+            }
+        }
+
         stage('Update ArgoCD Deployment') {
             steps {
                 script {
                     echo 'Updating ArgoCD deployment...'
                     // Add your ArgoCD deployment update steps
-                    // Example: sh 'kubectl apply -f deployment.yaml'
+                    // Login to ArgoCD
+                    sh """
+                    argocd login $ARGOCD_SERVER --username $ARGOCD_USER --password $ARGOCD_PASS --insecure
+                    argocd app sync <your-app-name>  // Replace with your ArgoCD app name
+                    """
                 }
             }
         }
